@@ -68,6 +68,12 @@ class DesktopClass {
 		this.app = app;
 		// string name of API key passed to preaload to be accessed via window[ apiName ]
 		this.apiName = "_API_";
+		// Control which methods front end is allowed to use
+		this.preloadMethods = {
+			get: true, post: true, // Express methods
+			on: true, emit: true, detach: true, // Singlas
+			getFilePath: false,  // File path resolver
+		};
 
 		// Screens: Dectect all screens
 		this.screens      = {};
@@ -91,25 +97,26 @@ class DesktopClass {
 		// Methods exported by this script
 		this.exportProps = [
 			"settings",         // Class an esay way to save data on disk
-			"getScreens",       // func  explicit
-			"getPrimaryScreen", // func  explicit
-			"getScreenInfo",    // func  explicit
-			"get",              // func  express get
-			"post",             // func  express post
-			"use",              // func  express use
-			"protocol",         // func  register schema
-			"createWindow",     // func  explicit
-			"init",             // func  required to prepare express
-			"emit",             // func  send event, data?
-			"on",               // func  listen to event
-			"mode",             // bool  close or keep alive on all windows closed
+			"getScreens",       // func    explicit
+			"getPrimaryScreen", // func    explicit
+			"getScreenInfo",    // func    explicit
+			"get",              // func    express get
+			"post",             // func    express post
+			"use",              // func    express use
+			"protocol",         // func    register schema
+			"createWindow",     // func    explicit
+			"init",             // func    required to prepare express
+			"emit",             // func    send event, data?
+			"on",               // func    listen to event
+			"mode",             // bool    close or keep alive on all windows closed
+			"preloadMethods",   // Object  Control methods from default preload file
 		].map((method) => {
 			if (typeof this[ method ] === "function") this[ method ] = this[ method ].bind(this);
 			return method;
 		});
 
 		ipcMain.on("get-config", (event) => {
-			event.returnValue = { apiName: this.apiName };
+			event.returnValue = { apiName: this.apiName, preloadMethods: this.preloadMethods };
 			return event;
 		});
 	}
@@ -374,9 +381,15 @@ class DesktopClass {
 				specsInfo.height   = specsInfo.height || "full";
 				specsInfo.x        = specsInfo.x || "min";
 				specsInfo.y        = specsInfo.y || "min";
-				specsInfo.raw.type = "splash";
 				specsInfo.raw.titleBarStyle = "hidden";
 				specsInfo.raw = { ...specsInfo.raw, ...commonSpecs };
+				if (specsInfo.debug) { // Allow writting in console
+					specsInfo.raw.type = "splash";
+				} else {
+					specsInfo.raw.type = "desktop";
+					specsInfo.raw.focusable = false;
+					specsInfo.raw.alwaysOnTop = false;
+				}
 			},
 
 			borderless: () => {
