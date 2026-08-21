@@ -387,7 +387,7 @@ class DesktopClass {
 					specsInfo.raw.type = "splash";
 				} else {
 					specsInfo.raw.type = "desktop";
-					specsInfo.raw.focusable = false;
+					specsInfo.raw.focusable = true;
 					specsInfo.raw.alwaysOnTop = false;
 				}
 			},
