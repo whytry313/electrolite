@@ -235,7 +235,7 @@ class DesktopClass {
 
 
 	async onCallAPI (event, route, method, values) {
-		const res = await this.windowsStack[ this.#getIDFromEvent(event) ].apply(route, method, values);
+		const res = await this.#getWindowFromEvent(event).apply(route, method, values);
 		event.returnValue = res;
 		return event;
 	}
@@ -244,7 +244,7 @@ class DesktopClass {
 	onEmit() {
 		const args = Array.from(arguments); const event = args.shift();
 		const eventName = args[0];// args[1] before shift
-		this.windowsStack[ this.#getIDFromEvent(event) ].onEvent(...args);
+		this.#getWindowFromEvent(event).onEvent(...args);
 		if (this.hooks[ eventName ]) { this.hooks[ eventName ].forEach((ctx_window) => ctx_window(...args)); }
 		event.returnValue = true;
 		return true;
@@ -262,6 +262,21 @@ class DesktopClass {
 
 
 	//////////////////////////////// Private Methods
+
+
+	#getWindowFromEvent(event) {
+		let win =  this.windowsStack[ this.#getIDFromEvent(event) ];
+		if (!win) {
+			Object.keys(this.windowsStack).forEach((key) => {
+				const _win = this.windowsStack[ key ];
+				if (_win.window.webContents.mainFrame.routingId === event.frameId) {
+					win = _win;
+				}
+			});
+		}
+		if (!win) throw new Error("Something went wrong, no window found for event");
+		return win;
+	}
 
 
 	#getIDFromEvent(event) {
