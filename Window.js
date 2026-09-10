@@ -44,9 +44,9 @@ class Window {
 
 
 	// Internal APi Get/Post route - exclusive to this window, use Electrolite.get for global routes
-	use(middleware)       { this.API.middleware(middleware); return this; } // chain events
-	get(route, callback)  { this.API.get(route,  callback); return this;  } // chain events
-	post(route, callback) { this.API.post(route, callback); return this;  } // chain events
+	use(middleware)                 { this.API.middleware(middleware); return this; } // chain events
+	get(route, callback, opt = {})  { this.API.get(route,  callback, opt); return this;  } // chain events
+	post(route, callback, opt = {}) { this.API.post(route, callback, opt); return this;  } // chain events
 
 
 	async execute(commandString) {
