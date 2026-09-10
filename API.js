@@ -39,18 +39,18 @@ class APIClass {
 		this.#routes.middleware.push(middleware);
 	}
 
-	get(route, callback) {
-		this.throwErrorIfExists(route, "get");
+	get(route, callback, type = "get") {
+		this.throwErrorIfExists(route, type);
 		this.hasRoutes = true;
-		const routeObject = new Route("get", route, callback, this);
+		const routeObject = new Route(type, route, callback, this);
 		this.#routes.get.push(routeObject);
 		return routeObject;
 	}
 
-	post(route, callback) {
-		this.throwErrorIfExists(route, "post");
+	post(route, callback, type = "post") {
+		this.throwErrorIfExists(route, type);
 		this.hasRoutes = true;
-		const routeObject = new Route("get", route, callback, this);
+		const routeObject = new Route(type, route, callback, this);
 		this.#routes.post.push(routeObject);
 		return routeObject;
 	}
@@ -79,7 +79,6 @@ class APIClass {
 	}
 
 	removeRoute(type, routeObject) {
-		console.log({ type, routeObject });
 		this.#routes[ type ] = this.#routes[ type ].filter(r => r !== routeObject);
 	}
 
