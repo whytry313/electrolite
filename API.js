@@ -9,8 +9,6 @@ class Route {
 		this.context  = context;
 		this.callback = callback;
 
-		console.log(type, route);
-
 		this.then   = this.then.bind(this);
 		this.remove = this.remove.bind(this);
 	}
