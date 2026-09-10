@@ -1,16 +1,28 @@
 const routeParser = require('./lib/route-parser.js');
 
-/*
-	Gloabal or window-specific API builder
+class Route {
+	constructor(type, route, callback, context) {
+		this.path = new routeParser(route);
 
-	Uses Express electrolite[ get, post, use ] system methods
-	NOTE: a thrid Object parameter is allowed expecting { replace: bool, signature: String:RouteSignature } to be able to remoad a route
+		this.type     = type;
+		this.rawPath  = route;
+		this.context  = context;
+		this.callback = callback;
 
-	Schema:
-		electrolite.use(async? function: Callback)
-		electrolite.get(Srting: route, async? function: Callback, { replace: bool, signature: String }? )
-		electrolite.post(Srting: route, async? function: Callback, { replace: bool, signature: String }? )
-*/
+		console.log(type, route);
+
+		this.then   = this.then.bind(this);
+		this.remove = this.remove.bind(this);
+	}
+
+	remove() {
+		this.context.removeRoute(this.type, this);
+	}
+
+	then(callback) {
+		return callback(this);
+	}
+};
 
 class APIClass {
 	#routes = { get: [], post: [], middleware: [] };
@@ -21,49 +33,31 @@ class APIClass {
 		this.use         = this.use.bind(this);
 		this.post        = this.post.bind(this);
 		this.getRoute    = this.getRoute.bind(this);
+		this.removeRoute = this.removeRoute.bind(this);
+		this.throwErrorIfExists = this.throwErrorIfExists.bind(this);
 	}
 
 	use(middleware) {
 		this.#routes.middleware.push(middleware);
 	}
 
-	get(route, callback, opt = {}) {
-		this.#deleteIfRouteReplace(route, "get", opt);
-		this.#throwErrorIfExists(route, "get");
+	get(route, callback) {
+		this.throwErrorIfExists(route, "get");
 		this.hasRoutes = true;
-		this.#routes.get.push({
-			path: new routeParser(route),
-			callback: callback,
-			rawRoute: route,
-			options: opt
-		});
+		const routeObject = new Route("get", route, callback, this);
+		this.#routes.get.push(routeObject);
+		return routeObject;
 	}
 
-	post(route, callback, opt = {}) {
-		this.#deleteIfRouteReplace(route, "post", opt);
-		this.#throwErrorIfExists(route, "post");
+	post(route, callback) {
+		this.throwErrorIfExists(route, "post");
 		this.hasRoutes = true;
-		this.#routes.post.push({
-			path: new routeParser(route),
-			callback: callback,
-			rawRoute: route,
-			options: opt
-		});
+		const routeObject = new Route("get", route, callback, this);
+		this.#routes.post.push(routeObject);
+		return routeObject;
 	}
 
-	#deleteIfRouteReplace(route, type, opt) {
-		if (!opt.replace) return;
-		const found = this.#routes[ type ].filter(r => r.rawRoute === route)[0];
-		if (!found) return;
-
-		const { signature, replace } = found.options;
-
-		if (!replace) return;
-		if (signature !== opt.signature) { throw new Error(`[ERROR] Missmatch signature for route [${ type }] ${ route }`); }
-		this.#routes[ type ] = this.#routes[ type ].filter(route => route !== found);
-	}
-
-	#throwErrorIfExists(route, method) {
+	throwErrorIfExists(route, method) {
 		let exists = false;
 		let isWildcard = route[route.length - 1] === "*";
 		this.#routes[ method ].forEach((routeElement) => {
@@ -86,15 +80,9 @@ class APIClass {
 		return { route, query };
 	}
 
-	clean() { // Clean orphaned and defunct callback routes
-		[ "get", "post" ].forEach((type) => {
-			this.#routes[ type ] = this.#routes[ type ].filter((route) => {
-				const validCallback = !!route.callback;
-				if (!validCallback) console.log(`[CLEAN] Removed dead route [${ type }] ${ route.path }`);
-				return validCallback;
-			});
-		});
-		this.#routes.middleware = this.#routes.middleware.filter(Boolean);
+	removeRoute(type, routeObject) {
+		console.log({ type, routeObject });
+		this.#routes[ type ] = this.#routes[ type ].filter(r => r !== routeObject);
 	}
 
 	getRoute(routeWithQueryParams, method, callerWindow) {

@@ -14,8 +14,6 @@ const idGenerator     = require('./lib/idGenerator.js');
 	  to restrict contextBridges to be exported - see exportProps
 
 	- Uses Express electrolite[ get, post, use ] system methods
-	  NOTE: a thrid Object parameter is allowed expecting { replace: bool, signature: String:RouteSignature } to be able to remoad a route
-	  Schema: electrolite[ get | post ](Srting: route, async? function: Callback, { replace: bool, signature: String }? )
 
 	- Events can be passed to all windows though electrolite[ emit, on ](event, data/callback),
 	  to have window-specific events, use window.on/window.emit instead of electrolite.on/electrolite.emit
@@ -136,9 +134,9 @@ class DesktopClass {
 	getScreenInfo(name) { return typeof name === "string" ? this.screens[ name ] : undefined; }
 
 	// Express-based methods
-	use(middleware)                 { this.API.use(middleware); return this; } // chain events
-	get(route, callback, opt = {})  { this.API.get(route,  callback, opt); return this; }  // chain events
-	post(route, callback, opt = {}) { this.API.post(route, callback, opt); return this; } // chain events
+	use(middleware)       { this.API.use(middleware); return this; } // chain events
+	get(route, callback)  { return this.API.get(route,  callback); }  // chain events
+	post(route, callback) { return this.API.post(route, callback); } // chain events
 
 	// Register custom schema (eg: app --> url="app://my/file.jpg")
 	protocol(name, callback) {
